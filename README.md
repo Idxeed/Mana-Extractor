@@ -4,5 +4,9 @@ This is a simple bash script that extracts and scans the firmware file of IoT de
 
 To successfully execute the script, you need to create an empty folder, place the firmware file, the script and support files (.txt) there.
 
-After:
-    sudo ./analyze-firmware.sh
+After: sudo ./analyze-firmware.sh
+
+Example of work:
+
+
+![изображение](https://github.com/Idxeed/Mana-Extractor/assets/117141740/255f1739-de0d-4cc6-b251-a7a865d7f6cf)
