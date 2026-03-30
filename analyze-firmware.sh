@@ -20,7 +20,7 @@ echo '  "analysis_date": "'$(date -Iseconds)'",' >> "$JSON_REPORT"
 echo '  "findings": {' >> "$JSON_REPORT"
 
 echo -e "${YELLOW}[*] Gathering information about system..${NC}"
-mkdir Firmware
+mkdir -p Firmware
 binwalk "$namefile" -B --log=Firmware/About_System &>/dev/null
 echo -e "${YELLOW}[*] The report can found in Firmware/About_System.txt${NC}"
 
@@ -156,9 +156,9 @@ done
 read -p ''
 echo -e "${YELLOW}[*] Start extracting filesystem..${NC}"
 mkdir -p Firmware/Filesystem
-cp "$namefile" Firmware/Filesystem/
+cp "$namefile" Firmware/Filesystem/ || { echo -e "${RED}[!] Failed to copy firmware file${NC}"; exit 1; }
 cd Firmware/Filesystem || exit
-sudo binwalk "$namefile" -Me --run-as=root &>/dev/null
+sudo binwalk -Me --run-as-root "$(basename "$namefile")" &>/dev/null
 echo -e "${YELLOW}[*] Attempting to find init files:${NC}"
 output1=$(sudo find . -iname "inittab")
 if [ -z "$output1" ]
@@ -204,14 +204,16 @@ fi
 
 echo -e "${YELLOW}[*] Attempting to find webserver: ${NC}"
 
-while IFS= read -r line
+# Check for common web server binaries
+webserver_names=("httpd" "nginx" "apache" "lighttpd" "busybox" "thttpd" "mini_httpd")
+for ws in "${webserver_names[@]}"
 do
-  output2=$(sudo find -iname "$line")
+  output2=$(sudo find . -iname "*$ws*")
   if [ -z "$output2" ]
-  then echo -e "${YELLOW} Check $line... ${NC}"
-  else echo -e "${GREEN}[+] $line was found: ${NC} \n$output2 "; break
+  then echo -e "${YELLOW} Check $ws... ${NC}"
+  else echo -e "${GREEN}[+] $ws was found: ${NC} \n$output2 "; break
   fi 
-done < ../../webservers.txt 
+done
 
 echo -e "${YELLOW}[*] Attempting to find Python: ${NC}"
 output1=$(sudo find -iname "*.py")
@@ -249,19 +251,25 @@ else echo -e "${GREEN}[+] Drivers were found! Check Firmware/DriversList.txt ${N
 fi
 
 echo -e "${YELLOW}[*] Attempting to find symbol table"
-while IFS= read -r line
+
+# Check for common symbol table files
+symbol_names=("System.map" "symbols" "kallsyms" "vmlinux")
+for sym in "${symbol_names[@]}"
 do
-  output2=$(sudo find -iname "$line")
+  output2=$(sudo find . -iname "*$sym*")
   if [ -z "$output2" ]
-  then echo -e "${YELLOW} Check $line... ${NC}"
-  else echo -e "${GREEN}[+] $line was found: ${NC} \n$output2"; break
+  then echo -e "${YELLOW} Check $sym... ${NC}"
+  else echo -e "${GREEN}[+] $sym was found: ${NC} \n$output2"; break
   fi 
-done < ../../SymbolTable.txt
+done
 
 # ============================================
 # FEATURE 5: Generate JSON Report
 # ============================================
 echo -e "${YELLOW}[*] Generating JSON report...${NC}"
+
+# Ensure Reports directory exists
+mkdir -p "$REPORT_DIR"
 
 # Close JSON report
 echo '  },' >> "$JSON_REPORT"
