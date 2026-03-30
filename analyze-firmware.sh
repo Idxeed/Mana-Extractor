@@ -155,8 +155,8 @@ done
 # ============================================
 read -p ''
 echo -e "${YELLOW}[*] Start extracting filesystem..${NC}"
-mkdir Firmware/Filesystem
-cp "$namefile" Firmware/Filesystem
+mkdir -p Firmware/Filesystem
+cp "$namefile" Firmware/Filesystem/
 cd Firmware/Filesystem || exit
 sudo binwalk "$namefile" -Me --run-as=root &>/dev/null
 echo -e "${YELLOW}[*] Attempting to find init files:${NC}"
